@@ -1,6 +1,8 @@
+#include "async_api_tester.h"
 #include <iostream>
-#include <oes_api/oes_async_api.h>
+
 int main(int argc, char const *argv[]) {
+  AsyncOptionTester tester;
   std::cout << "hello, world" << std::endl;
   return 0;
 }
