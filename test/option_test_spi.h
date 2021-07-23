@@ -122,6 +122,14 @@ class OptionTestSpi final : public Quant360::OesClientSpi {
                          int32 requestId) override;
 private:
   Synchronizer& sync_;
+
+  void handle_message_received_event(const OesQryCursorT* cursor, int32_t requestId) {
+    receivedRequestID = requestId;
+    if (cursor == nullptr || cursor->isEnd) {
+      sync_.end_transaction();
+    }
+  }
+
 public:
   explicit OptionTestSpi(Synchronizer& sync): sync_(sync) {}
 

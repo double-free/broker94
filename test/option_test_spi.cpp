@@ -60,7 +60,6 @@ void OptionTestSpi::OnQueryTrade(const OesTrdItemT *pTrade,
 void OptionTestSpi::OnQueryCashAsset(const OesCashAssetItemT *pCashAsset,
                                      const OesQryCursorT *pCursor,
                                      int32 requestId) {
-  receivedRequestID = requestId;
   SLOG_INFO(
       ">>> 查询到资金信息: index[%d], isEnd[%c], "
       "资金账户代码[%s], 客户代码[%s], 币种[%" __SPK_FMT_HH__ "u], "
@@ -93,7 +92,7 @@ void OptionTestSpi::OnQueryCashAsset(const OesCashAssetItemT *pCashAsset,
       pCashAsset->optionExt.totalNetMargin,
       pCashAsset->optionExt.pendingSupplMargin, pCashAsset->currentTotalBal,
       pCashAsset->currentAvailableBal, pCashAsset->currentDrawableBal);
-  sync_.end_transaction();
+  handle_message_received_event(pCursor, requestId);
 }
 
 /* 查询股票持仓信息回调 */
@@ -111,7 +110,16 @@ void OptionTestSpi::OnQueryCustInfo(const OesCustItemT *pCust,
 /* 查询股东账户信息回调 */
 void OptionTestSpi::OnQueryInvAcct(const OesInvAcctItemT *pInvAcct,
                                    const OesQryCursorT *pCursor,
-                                   int32 requestId) {}
+                                   int32 requestId) {
+  SLOG_INFO(">>> 查询到证券账户信息: index[%d], isEnd[%c], "
+            "证券账户[%s], 市场代码[%" __SPK_FMT_HH__ "u], "
+            "客户代码[%s], 账户状态[%" __SPK_FMT_HH__ "u], "
+            "主板权益[%d], 科创板权益[%d]\n",
+            pCursor->seqNo, pCursor->isEnd ? 'Y' : 'N', pInvAcct->invAcctId,
+            pInvAcct->mktId, pInvAcct->custId, pInvAcct->status,
+            pInvAcct->subscriptionQuota, pInvAcct->kcSubscriptionQuota);
+  handle_message_received_event(pCursor, requestId);
+}
 /* 查询佣金信息回调 */
 void OptionTestSpi::OnQueryCommissionRate(
     const OesCommissionRateItemT *pCommissionRate, const OesQryCursorT *pCursor,
@@ -143,10 +151,48 @@ void OptionTestSpi::OnQueryMarketState(const OesMarketStateItemT *pMarketState,
 void OptionTestSpi::OnQueryOption(const OesOptionItemT *pOption,
                                   const OesQryCursorT *pCursor,
                                   int32 requestId) {
-  receivedRequestID = requestId;
+  SLOG_INFO(
+      ">>> 查询到期权产品信息: index[%d], isEnd[%c], "
+      "证券代码[%s], 合约交易代码[%s], 合约名称[%s], 标的证券[%s], "
+      "市场代码[%" __SPK_FMT_HH__ "u], 产品类型[%" __SPK_FMT_HH__ "u], "
+      "证券类型[%" __SPK_FMT_HH__ "u], 证券子类型[%" __SPK_FMT_HH__ "u], "
+      "合约类型[%" __SPK_FMT_HH__ "u], 行权方式[%" __SPK_FMT_HH__ "u], "
+      "交割方式[%" __SPK_FMT_HH__ "u], 当日回转[%" __SPK_FMT_HH__ "u], "
+      "限制开仓[%" __SPK_FMT_HH__ "u], 连续停牌[%" __SPK_FMT_HH__ "u], "
+      "临时停牌[%" __SPK_FMT_HH__ "u], 合约单位[%d], 期权行权价[%d], "
+      "交割日期[%08d], 交割月份[%08d], 上市日期[%08d], 最后交易日[%08d], "
+      "行权起始日[%08d], 行权结束日[%08d], 持仓量[%" __SPK_FMT_LL__ "d], "
+      "前收盘价[%d], 前结算价[%d], 标的前收[%d], 报价单位[%d], 涨停价[%d], "
+      "跌停价[%d], 买单位[%d], 限价买上限[%d], 限价买下限[%d], 市价买上限[%d], "
+      "市价买下限[%d], 卖单位[%d], 限价卖上限[%d], 限价卖下限[%d], "
+      "市价卖上限[%d], 市价卖下限[%d], 卖开保证金[%" __SPK_FMT_LL__ "d], "
+      "保证金参数一[%d](万分比), 保证金参数二[%d](万分比), "
+      "保证金上浮比例[%d](万分比), 合约状态[%c%c%c%c%c%c%c%c]\n",
+      pCursor->seqNo, pCursor->isEnd ? 'Y' : 'N', pOption->securityId,
+      pOption->contractId, pOption->securityName, pOption->underlyingSecurityId,
+      pOption->mktId, pOption->productType, pOption->securityType,
+      pOption->subSecurityType, pOption->contractType, pOption->exerciseType,
+      pOption->deliveryType, pOption->isDayTrading, pOption->limitOpenFlag,
+      pOption->suspFlag, pOption->temporarySuspFlag, pOption->contractUnit,
+      pOption->exercisePrice, pOption->deliveryDate, pOption->deliveryMonth,
+      pOption->listDate, pOption->lastTradeDay, pOption->exerciseBeginDate,
+      pOption->exerciseEndDate, pOption->contractPosition,
+      pOption->prevClosePrice, pOption->prevSettlPrice,
+      pOption->underlyingClosePrice, pOption->priceTick,
+      pOption->upperLimitPrice, pOption->lowerLimitPrice, pOption->buyQtyUnit,
+      pOption->lmtBuyMaxQty, pOption->lmtBuyMinQty, pOption->mktBuyMaxQty,
+      pOption->mktBuyMinQty, pOption->sellQtyUnit, pOption->lmtSellMaxQty,
+      pOption->lmtSellMinQty, pOption->mktSellMaxQty, pOption->mktSellMinQty,
+      pOption->sellMargin, pOption->marginRatioParam1,
+      pOption->marginRatioParam2, pOption->increasedMarginRatio,
+      pOption->securityStatusFlag[0], pOption->securityStatusFlag[1],
+      pOption->securityStatusFlag[2], pOption->securityStatusFlag[3],
+      pOption->securityStatusFlag[4], pOption->securityStatusFlag[5],
+      pOption->securityStatusFlag[6], pOption->securityStatusFlag[7]);
+
   EXPECT_STREQ(pOption->securityId, expected_option_item.securityId);
   EXPECT_EQ(pOption->exercisePrice, expected_option_item.exercisePrice);
-  sync_.end_transaction();
+  handle_message_received_event(pCursor, requestId);
 }
 /* 查询期权持仓信息回调 (适用于期权业务) */
 void OptionTestSpi::OnQueryOptHolding(const OesOptHoldingItemT *pOptHolding,
