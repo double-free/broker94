@@ -5,7 +5,7 @@ TARGET := tests
 GTEST_DIR := googletest-1.11.0
 API_DIR := ../OesApi_0.16.1.9-20201120/oes_libs-0.16.1.9-release
 
-SRCS := $(wildcard ./*.cpp) ../src/option_spi.cpp $(wildcard $(API_DIR)/samples/oes_sample_cpp/oes_client_sample.cpp)
+SRCS := $(wildcard ./*.cpp) $(wildcard $(API_DIR)/samples/oes_sample_cpp/oes_client_sample.cpp)
 OBJS := $(patsubst %cpp,%o,$(SRCS))
 
 INC_DIR   = $(API_DIR)/include
