@@ -190,30 +190,207 @@ void OptionTestSpi::OnQueryOption(const OesOptionItemT *pOption,
       pOption->securityStatusFlag[4], pOption->securityStatusFlag[5],
       pOption->securityStatusFlag[6], pOption->securityStatusFlag[7]);
 
-  EXPECT_STREQ(pOption->securityId, expected_option_item.securityId);
-  EXPECT_EQ(pOption->exercisePrice, expected_option_item.exercisePrice);
   handle_message_received_event(pCursor, requestId);
+  last_option = *pOption;
 }
 /* 查询期权持仓信息回调 (适用于期权业务) */
-void OptionTestSpi::OnQueryOptHolding(const OesOptHoldingItemT *pOptHolding,
+void OptionTestSpi::OnQueryOptHolding(const OesOptHoldingItemT *pHoldingItem,
                                       const OesQryCursorT *pCursor,
-                                      int32 requestId) {}
+                                      int32 requestId) {
+  SLOG_INFO(">>> 查询到期权持仓信息: index[%d], isEnd[%c], "
+            "证券账户[%s], "
+            "合约代码[%s], "
+            "市场代码[%" __SPK_FMT_HH__ "u], "
+            "持仓类型[%" __SPK_FMT_HH__ "u], "
+            "产品类型[%" __SPK_FMT_HH__ "u], "
+            "证券类型[%" __SPK_FMT_HH__ "u], "
+            "证券子类型[%" __SPK_FMT_HH__ "u], "
+            "合约类型[%" __SPK_FMT_HH__ "u], "
+            "日初持仓张数[%" __SPK_FMT_LL__ "d], "
+            "日初可用持仓张数[%" __SPK_FMT_LL__ "d], "
+            "日初总持仓成本[%" __SPK_FMT_LL__ "d], "
+            "日中累计开仓张数[%" __SPK_FMT_LL__ "d], "
+            "开仓未成交张数[%" __SPK_FMT_LL__ "d], "
+            "日中累计平仓张数[%" __SPK_FMT_LL__ "d], "
+            "平仓在途冻结张数[%" __SPK_FMT_LL__ "d], "
+            "手动冻结张数[%" __SPK_FMT_LL__ "d], "
+            "日中累计获得权利金[%" __SPK_FMT_LL__ "d], "
+            "日中累计支出权利金[%" __SPK_FMT_LL__ "d], "
+            "日中累计开仓费用[%" __SPK_FMT_LL__ "d], "
+            "日中累计平仓费用[%" __SPK_FMT_LL__ "d], "
+            "权利仓行权冻结张数[%" __SPK_FMT_LL__ "d], "
+            "义务仓持仓保证金[%" __SPK_FMT_LL__ "d], "
+            "可平仓张数[%" __SPK_FMT_LL__ "d], "
+            "可行权张数[%" __SPK_FMT_LL__ "d], "
+            "总持仓张数[%" __SPK_FMT_LL__ "d], "
+            "持仓成本价[%" __SPK_FMT_LL__ "d], "
+            "可备兑标的券数量[%" __SPK_FMT_LL__ "d]\n",
+            pCursor->seqNo, pCursor->isEnd ? 'Y' : 'N', pHoldingItem->invAcctId,
+            pHoldingItem->securityId, pHoldingItem->mktId,
+            pHoldingItem->positionType, pHoldingItem->productType,
+            pHoldingItem->securityType, pHoldingItem->subSecurityType,
+            pHoldingItem->contractType, pHoldingItem->originalQty,
+            pHoldingItem->originalAvlQty, pHoldingItem->originalCostAmt,
+            pHoldingItem->totalOpenQty, pHoldingItem->uncomeQty,
+            pHoldingItem->totalCloseQty, pHoldingItem->closeFrzQty,
+            pHoldingItem->manualFrzQty, pHoldingItem->totalInPremium,
+            pHoldingItem->totalOutPremium, pHoldingItem->totalOpenFee,
+            pHoldingItem->totalCloseFee, pHoldingItem->exerciseFrzQty,
+            pHoldingItem->positionMargin, pHoldingItem->closeAvlQty,
+            pHoldingItem->exerciseAvlQty, pHoldingItem->sumQty,
+            pHoldingItem->costPrice, pHoldingItem->coveredAvlUnderlyingQty);
+  handle_message_received_event(pCursor, requestId);
+
+  // deep copy here?
+  last_option_holding = *pHoldingItem;
+}
 /* 查询期权标的持仓信息回调 (适用于期权业务) */
 void OptionTestSpi::OnQueryOptUnderlyingHolding(
     const OesOptUnderlyingHoldingItemT *pUnderlyingHld,
-    const OesQryCursorT *pCursor, int32 requestId) {}
+    const OesQryCursorT *pCursor, int32 requestId) {
+  SLOG_INFO(
+      ">>> 期权标的持仓信息: index[%d], isEnd[%c], "
+      "证券账户[%s], "
+      "标的证券代码[%s], "
+      "市场代码[%" __SPK_FMT_HH__ "u], "
+      "标的市场代码[%" __SPK_FMT_HH__ "u], "
+      "标的证券类型[%" __SPK_FMT_HH__ "u], "
+      "标的证券子类型[%" __SPK_FMT_HH__ "u], "
+      "日初标的证券的总持仓数量[%" __SPK_FMT_LL__ "d], "
+      "日初标的证券的可用持仓数量[%" __SPK_FMT_LL__ "d], "
+      "日初备兑仓实际占用的标的证券数量[%" __SPK_FMT_LL__ "d], "
+      "日初备兑仓应占用的标的证券数量[%" __SPK_FMT_LL__ "d], "
+      "当前备兑仓实际占用的标的证券数量[%" __SPK_FMT_LL__ "d], "
+      "当前备兑仓占用标的证券的缺口数量[%" __SPK_FMT_LL__ "d], "
+      "当前可用于备兑开仓的标的持仓数量[%" __SPK_FMT_LL__ "d], "
+      "当前可锁定的标的持仓数量[%" __SPK_FMT_LL__ "d], "
+      "标的证券总持仓数量[%" __SPK_FMT_LL__ "d], "
+      "标的证券当日最大可减持额度[%" __SPK_FMT_LL__ "d]\n",
+      pCursor->seqNo, pCursor->isEnd ? 'Y' : 'N', pUnderlyingHld->invAcctId,
+      pUnderlyingHld->underlyingSecurityId, pUnderlyingHld->mktId,
+      pUnderlyingHld->underlyingMktId, pUnderlyingHld->underlyingSecurityType,
+      pUnderlyingHld->underlyingSubSecurityType, pUnderlyingHld->originalHld,
+      pUnderlyingHld->originalAvlHld, pUnderlyingHld->originalCoveredQty,
+      pUnderlyingHld->initialCoveredQty, pUnderlyingHld->coveredQty,
+      pUnderlyingHld->coveredGapQty, pUnderlyingHld->coveredAvlQty,
+      pUnderlyingHld->lockAvlQty, pUnderlyingHld->sumHld,
+      pUnderlyingHld->maxReduceQuota);
+  handle_message_received_event(pCursor, requestId);
+
+  last_option_underlying_holding = *pUnderlyingHld;
+}
 /* 查询期权限仓额度信息回调 (适用于期权业务) */
 void OptionTestSpi::OnQueryOptPositionLimit(
-    const OesOptPositionLimitItemT *pPositionLimit,
-    const OesQryCursorT *pCursor, int32 requestId) {}
+    const OesOptPositionLimitItemT *pPositionLimitItem,
+    const OesQryCursorT *pCursor, int32 requestId) {
+  SLOG_INFO(
+      ">>> 期权限仓额度信息: index[%d], isEnd[%c], "
+      "证券账户[%s], "
+      "标的证券代码[%s], "
+      "市场代码[%" __SPK_FMT_HH__ "u], "
+      "标的市场代码[%" __SPK_FMT_HH__ "u], "
+      "标的证券类型[%" __SPK_FMT_HH__ "u], "
+      "标的证券子类型[%" __SPK_FMT_HH__ "u], "
+      "总持仓限额[%d],"
+      "权利仓限额[%d],"
+      "单日买入开仓限额[%d],"
+      "日初权利仓持仓数量[%d],"
+      "日初义务仓持仓数量[%d],"
+      "日初备兑义务仓持仓数量[%d],"
+      "未占用的总持仓限额[%d],"
+      "未占用的权利仓限额[%d],"
+      "未占用的单日买入开仓限额[%d]\n",
+      pCursor->seqNo, pCursor->isEnd ? 'Y' : 'N', pPositionLimitItem->invAcctId,
+      pPositionLimitItem->underlyingSecurityId, pPositionLimitItem->mktId,
+      pPositionLimitItem->underlyingMktId,
+      pPositionLimitItem->underlyingSecurityType,
+      pPositionLimitItem->underlyingSubSecurityType,
+      pPositionLimitItem->totalPositionLimit,
+      pPositionLimitItem->longPositionLimit,
+      pPositionLimitItem->dailyBuyOpenLimit,
+      pPositionLimitItem->originalLongQty, pPositionLimitItem->originalShortQty,
+      pPositionLimitItem->originalCoveredQty,
+      pPositionLimitItem->availableTotalPositionLimit,
+      pPositionLimitItem->availableLongPositionLimit,
+      pPositionLimitItem->availableDailyBuyOpenLimit);
+  handle_message_received_event(pCursor, requestId);
+  last_option_position_limit = *pPositionLimitItem;
+}
 /* 查询期权限购额度信息回调 (适用于期权业务) */
 void OptionTestSpi::OnQueryOptPurchaseLimit(
-    const OesOptPurchaseLimitItemT *pPurchaseLimit,
-    const OesQryCursorT *pCursor, int32 requestId) {}
+    const OesOptPurchaseLimitItemT *pPurchaseLimitItem,
+    const OesQryCursorT *pCursor, int32 requestId) {
+  SLOG_INFO(">>> 期权限购额度信息: index[%d], isEnd[%c], "
+            "客户代码[%s], "
+            "资金账号[%s], "
+            "股东账号[%s], "
+            "市场代码[%" __SPK_FMT_HH__ "u], "
+            "客户类别[%" __SPK_FMT_HH__ "u], "
+            "限购额度[%" __SPK_FMT_LL__ "d], "
+            "日初占用限购额度[%" __SPK_FMT_LL__ "d], "
+            "日中累计开仓额度[%" __SPK_FMT_LL__ "d], "
+            "当前挂单冻结额度[%" __SPK_FMT_LL__ "d], "
+            "日中累计平仓额度[%" __SPK_FMT_LL__ "d], "
+            "当前可用限购额度[%" __SPK_FMT_LL__ "d]\n",
+            pCursor->seqNo, pCursor->isEnd ? 'Y' : 'N',
+            pPurchaseLimitItem->custId, pPurchaseLimitItem->cashAcctId,
+            pPurchaseLimitItem->invAcctId, pPurchaseLimitItem->mktId,
+            pPurchaseLimitItem->custType, pPurchaseLimitItem->purchaseLimit,
+            pPurchaseLimitItem->originalUsedPurchaseAmt,
+            pPurchaseLimitItem->totalOpenPurchaseAmt,
+            pPurchaseLimitItem->frzPurchaseAmt,
+            pPurchaseLimitItem->totalClosePurchaseAmt,
+            pPurchaseLimitItem->availablePurchaseLimit);
+  handle_message_received_event(pCursor, requestId);
+  last_option_purchase_limit = *pPurchaseLimitItem;
+}
 /* 查询期权行权指派信息回调 (适用于期权业务) */
 void OptionTestSpi::OnQueryOptExerciseAssign(
-    const OesOptExerciseAssignItemT *pExerciseAssign,
-    const OesQryCursorT *pCursor, int32 requestId) {}
+    const OesOptExerciseAssignItemT *pExerAssignItem,
+    const OesQryCursorT *pCursor, int32 requestId) {
+  SLOG_INFO(">>> 查询到行权指派消息: index[%d], isEnd[%c], "
+            "证券账户[%s], "
+            "期权合约代码[%s], "
+            "期权合约名称[%s], "
+            "市场代码[%" __SPK_FMT_HH__ "u], "
+            "持仓方向[%" __SPK_FMT_HH__ "u], "
+            "产品类型[%" __SPK_FMT_HH__ "u], "
+            "证券类型[%" __SPK_FMT_HH__ "u], "
+            "证券子类型[%" __SPK_FMT_HH__ "u], "
+            "合约类型[%" __SPK_FMT_HH__ "u], "
+            "交割方式[%" __SPK_FMT_HH__ "u], "
+            "行权价格[%d],"
+            "行权张数[%d], "
+            "标的证券收付数量[%" __SPK_FMT_LL__ "d], "
+            "行权开始日期[%d],"
+            "行权结束日期[%d],"
+            "清算日期[%d],"
+            "交收日期[%d],"
+            "清算金额[%" __SPK_FMT_LL__ "d], "
+            "清算费用[%" __SPK_FMT_LL__ "d], "
+            "收付金额[%" __SPK_FMT_LL__ "d], "
+            "标的证券代码[%s], "
+            "标的市场代码[%" __SPK_FMT_HH__ "u], "
+            "标的证券类型[%" __SPK_FMT_HH__ "u]\n",
+            pCursor->seqNo, pCursor->isEnd ? 'Y' : 'N',
+            pExerAssignItem->invAcctId, pExerAssignItem->securityId,
+            pExerAssignItem->securityName, pExerAssignItem->mktId,
+            pExerAssignItem->positionType, pExerAssignItem->productType,
+            pExerAssignItem->securityType, pExerAssignItem->subSecurityType,
+            pExerAssignItem->contractType, pExerAssignItem->deliveryType,
+            pExerAssignItem->exercisePrice, pExerAssignItem->exerciseQty,
+            pExerAssignItem->deliveryQty, pExerAssignItem->exerciseBeginDate,
+            pExerAssignItem->exerciseEndDate, pExerAssignItem->clearingDate,
+            pExerAssignItem->deliveryDate, pExerAssignItem->clearingAmt,
+            pExerAssignItem->clearingFee, pExerAssignItem->settlementAmt,
+            pExerAssignItem->underlyingSecurityId,
+            pExerAssignItem->underlyingMktId,
+            pExerAssignItem->underlyingSecurityType);
+
+  handle_message_received_event(pCursor, requestId);
+
+  last_option_exercise_assignment = *pExerAssignItem;
+}
 /* 查询通知消息回调 */
 void OptionTestSpi::OnQueryNotifyInfo(const OesNotifyInfoItemT *pNotifyInfo,
                                       const OesQryCursorT *pCursor,

@@ -120,10 +120,12 @@ class OptionTestSpi final : public Quant360::OesClientSpi {
   void OnQueryNotifyInfo(const OesNotifyInfoItemT *pNotifyInfo,
                          const OesQryCursorT *pCursor,
                          int32 requestId) override;
-private:
-  Synchronizer& sync_;
 
-  void handle_message_received_event(const OesQryCursorT* cursor, int32_t requestId) {
+private:
+  Synchronizer &sync_;
+
+  void handle_message_received_event(const OesQryCursorT *cursor,
+                                     int32_t requestId) {
     receivedRequestID = requestId;
     if (cursor == nullptr || cursor->isEnd) {
       sync_.end_transaction();
@@ -131,8 +133,15 @@ private:
   }
 
 public:
-  explicit OptionTestSpi(Synchronizer& sync): sync_(sync) {}
+  explicit OptionTestSpi(Synchronizer &sync) : sync_(sync) {}
 
   int32_t receivedRequestID{0};
-  OesOptionItemT expected_option_item;
+
+  // cache received information and verify in unit tests
+  OesOptionItemT last_option;
+  OesOptHoldingItemT last_option_holding;
+  OesOptUnderlyingHoldingItemT last_option_underlying_holding;
+  OesOptPositionLimitItemT last_option_position_limit;
+  OesOptPurchaseLimitItemT last_option_purchase_limit;
+  OesOptExerciseAssignItemT last_option_exercise_assignment;
 };
