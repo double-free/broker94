@@ -46,24 +46,20 @@ TEST_F(OptionApiTestFixture, QueryOptionPosition) {
           sizeof(qry_filter.securityId) - 1);
 
   // no position, return 0 items
-  EXPECT_EQ(0, api_.QueryOptHolding(&qry_filter, 12345));
-
-  // query option long position position
-  // EXPECT_EQ(0, sync_.start_transaction([this, &qry_filter] {
-  //   return api_.QueryOptHolding(&qry_filter, 12345);
-  // }));
-  // sync_.wait();
+  if (api_.QueryOptHolding(&qry_filter, 12345) == 0) {
+    return;
+  }
 
   // call back received
-  // EXPECT_EQ(spi_.receivedRequestID, 12345);
-  // EXPECT_STREQ(spi_.last_option_holding.securityId, qry_filter.securityId);
-  // EXPECT_EQ(spi_.last_option_holding.positionType, qry_filter.positionType);
+  EXPECT_EQ(spi_.receivedRequestID, 12345);
+  EXPECT_STREQ(spi_.last_option_holding.securityId, qry_filter.securityId);
+  EXPECT_EQ(spi_.last_option_holding.positionType, qry_filter.positionType);
 
-  // we do not have any trade on it
-  // EXPECT_EQ(spi_.last_option_holding.originalQty, 0);
-  // EXPECT_EQ(spi_.last_option_holding.closeAvlQty, 0);
-  // EXPECT_EQ(spi_.last_option_holding.exerciseAvlQty, 0);
-  // EXPECT_EQ(spi_.last_option_holding.sumQty, 0);
+  // we have positions
+  EXPECT_EQ(spi_.last_option_holding.originalQty, 0);
+  EXPECT_GT(spi_.last_option_holding.closeAvlQty, 0);
+  EXPECT_EQ(spi_.last_option_holding.exerciseAvlQty, 0);
+  EXPECT_GT(spi_.last_option_holding.sumQty, 0);
 }
 
 TEST_F(OptionApiTestFixture, QueryOptionUnderlyingPosition) {
@@ -105,9 +101,9 @@ TEST_F(OptionApiTestFixture, QueryOptionLimits) {
   EXPECT_STREQ(spi_.last_option_position_limit.underlyingSecurityId, "510050");
   EXPECT_EQ(spi_.last_option_position_limit.totalPositionLimit, 10000);
   EXPECT_EQ(spi_.last_option_position_limit.longPositionLimit, 5000);
-  EXPECT_EQ(spi_.last_option_position_limit.availableTotalPositionLimit, 10000);
-  EXPECT_EQ(spi_.last_option_position_limit.availableLongPositionLimit, 5000);
-  EXPECT_EQ(spi_.last_option_position_limit.availableDailyBuyOpenLimit, 2000);
+  EXPECT_GT(spi_.last_option_position_limit.availableTotalPositionLimit, 0);
+  EXPECT_GT(spi_.last_option_position_limit.availableLongPositionLimit, 0);
+  EXPECT_GT(spi_.last_option_position_limit.availableDailyBuyOpenLimit, 0);
 
   // purchase limit
   OesQryOptPurchaseLimitFilterT qry_purchase_filter = {
@@ -131,17 +127,14 @@ TEST_F(OptionApiTestFixture, QueryOptionExerciseAssignment) {
           sizeof(qryFilter.securityId) - 1);
 
   // no assigment, return 0
-  EXPECT_EQ(0, api_.QueryOptExerciseAssign(&qryFilter, 12345));
-  // EXPECT_EQ(0, sync_.start_transaction([this, &qryFilter] {
-  //   return api_.QueryOptExerciseAssign(&qryFilter, 12345);
-  // }));
-  // sync_.wait();
+  if (api_.QueryOptExerciseAssign(&qryFilter, 12345) == 0) {
+    return;
+  }
 
-  // EXPECT_EQ(spi_.receivedRequestID, 12345);
-  // EXPECT_STREQ(spi_.last_option_exercise_assignment.securityName,
-  //              option_.contractId);
-  //
-  // EXPECT_EQ(spi_.last_option_exercise_assignment.deliveryType, 0);
-  // EXPECT_EQ(spi_.last_option_exercise_assignment.exercisePrice, 3500);
-  // EXPECT_EQ(spi_.last_option_exercise_assignment.exerciseQty, 0);
+  // ETF50 option is delivered in cash
+  EXPECT_EQ(spi_.last_option_exercise_assignment.deliveryType,
+            OES_OPT_DELIVERY_TYPE_CASH);
+  EXPECT_EQ(spi_.last_option_exercise_assignment.exercisePrice, 3500);
+  // exercise quantity shall be larger than 0
+  EXPECT_GT(spi_.last_option_exercise_assignment.exerciseQty, 0);
 }

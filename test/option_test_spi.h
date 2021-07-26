@@ -144,4 +144,9 @@ public:
   OesOptPositionLimitItemT last_option_position_limit;
   OesOptPurchaseLimitItemT last_option_purchase_limit;
   OesOptExerciseAssignItemT last_option_exercise_assignment;
+
+  // order reports
+  OesOrdCnfmT last_order_insert_report;
+  OesOrdCnfmT last_order_report;
+  OesOrdRejectT last_order_reject_report;
 };

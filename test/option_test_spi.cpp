@@ -4,13 +4,86 @@
 
 /* 委托拒绝回报 */
 void OptionTestSpi::OnBusinessReject(const OesRptMsgHeadT *pRptMsgHead,
-                                     const OesOrdRejectT *pOrderReject) {}
+                                     const OesOrdRejectT *pOrderReject) {
+
+  SLOG_INFO(">>> 收到委托业务拒绝回报: "
+            "执行类型[%" __SPK_FMT_HH__ "u], "
+            "客户端环境号[%" __SPK_FMT_HH__ "d], "
+            "客户委托流水号[%d], 证券账户[%s], 证券代码[%s], "
+            "市场代码[%" __SPK_FMT_HH__ "u], 委托类型[%" __SPK_FMT_HH__ "u], "
+            "买卖类型[%" __SPK_FMT_HH__ "u], 委托数量[%d], 委托价格[%d], "
+            "原始委托的客户订单编号[%" __SPK_FMT_LL__ "d], 错误码[%d]\n",
+            pRptMsgHead->execType, pOrderReject->clEnvId, pOrderReject->clSeqNo,
+            pOrderReject->invAcctId, pOrderReject->securityId,
+            pOrderReject->mktId, pOrderReject->ordType, pOrderReject->bsType,
+            pOrderReject->ordQty, pOrderReject->ordPrice,
+            pOrderReject->origClOrdId, pRptMsgHead->ordRejReason);
+
+  last_order_reject_report = *pOrderReject;
+  sync_.end_transaction();
+}
 /* 委托已收回报 */
 void OptionTestSpi::OnOrderInsert(const OesRptMsgHeadT *pRptMsgHead,
-                                  const OesOrdCnfmT *pOrderInsert) {}
+                                  const OesOrdCnfmT *pOrderInsert) {
+  SLOG_INFO(
+      ">>> 收到委托已收回报: "
+      "执行类型[%" __SPK_FMT_HH__ "u], "
+      "客户端环境号[%" __SPK_FMT_HH__ "d], 客户委托流水号[%d], "
+      "会员内部编号[%" __SPK_FMT_LL__ "d], 证券账户[%s], 证券代码[%s], "
+      "市场代码[%" __SPK_FMT_HH__ "u], 订单类型[%" __SPK_FMT_HH__ "u], "
+      "买卖类型[%" __SPK_FMT_HH__ "u], 委托状态[%" __SPK_FMT_HH__ "u], "
+      "委托日期[%d], 委托接收时间[%d], 委托确认时间[%d], "
+      "委托数量[%d], 委托价格[%d], 撤单数量[%d], 累计成交份数[%d], "
+      "累计成交金额[%" __SPK_FMT_LL__ "d], 累计债券利息[%" __SPK_FMT_LL__ "d], "
+      "累计交易佣金[%" __SPK_FMT_LL__ "d], 冻结交易金额[%" __SPK_FMT_LL__ "d], "
+      "冻结债券利息[%" __SPK_FMT_LL__ "d], 冻结交易佣金[%" __SPK_FMT_LL__ "d], "
+      "被撤内部委托编号[%" __SPK_FMT_LL__
+      "d], 拒绝原因[%d], 交易所错误码[%d]\n",
+      pRptMsgHead->execType, pOrderInsert->clEnvId, pOrderInsert->clSeqNo,
+      pOrderInsert->clOrdId, pOrderInsert->invAcctId, pOrderInsert->securityId,
+      pOrderInsert->mktId, pOrderInsert->ordType, pOrderInsert->bsType,
+      pOrderInsert->ordStatus, pOrderInsert->ordDate, pOrderInsert->ordTime,
+      pOrderInsert->ordCnfmTime, pOrderInsert->ordQty, pOrderInsert->ordPrice,
+      pOrderInsert->canceledQty, pOrderInsert->cumQty, pOrderInsert->cumAmt,
+      pOrderInsert->cumInterest, pOrderInsert->cumFee, pOrderInsert->frzAmt,
+      pOrderInsert->frzInterest, pOrderInsert->frzFee,
+      pOrderInsert->origClOrdId, pOrderInsert->ordRejReason,
+      pOrderInsert->exchErrCode);
+
+  last_order_insert_report = *pOrderInsert;
+  sync_.end_transaction();
+}
 /* 委托确认回报 */
 void OptionTestSpi::OnOrderReport(const OesRptMsgHeadT *pRptMsgHead,
-                                  const OesOrdCnfmT *pOrderReport) {}
+                                  const OesOrdCnfmT *pOrderReport) {
+  SLOG_INFO(
+      ">>> 收到委托回报: "
+      "执行类型[%" __SPK_FMT_HH__ "u], "
+      "客户端环境号[%" __SPK_FMT_HH__ "d], 客户委托流水号[%d], "
+      "会员内部编号[%" __SPK_FMT_LL__ "d], 证券账户[%s], 证券代码[%s], "
+      "市场代码[%" __SPK_FMT_HH__ "u], 订单类型[%" __SPK_FMT_HH__ "u], "
+      "买卖类型[%" __SPK_FMT_HH__ "u], 委托状态[%" __SPK_FMT_HH__ "u], "
+      "委托日期[%d], 委托接收时间[%d], 委托确认时间[%d], "
+      "委托数量[%d], 委托价格[%d], 撤单数量[%d], 累计成交份数[%d], "
+      "累计成交金额[%" __SPK_FMT_LL__ "d], 累计债券利息[%" __SPK_FMT_LL__ "d], "
+      "累计交易佣金[%" __SPK_FMT_LL__ "d], 冻结交易金额[%" __SPK_FMT_LL__ "d], "
+      "冻结债券利息[%" __SPK_FMT_LL__ "d], 冻结交易佣金[%" __SPK_FMT_LL__ "d], "
+      "被撤内部委托编号[%" __SPK_FMT_LL__
+      "d], 拒绝原因[%d], 交易所错误码[%d]\n",
+      pRptMsgHead->execType, pOrderReport->clEnvId, pOrderReport->clSeqNo,
+      pOrderReport->clOrdId, pOrderReport->invAcctId, pOrderReport->securityId,
+      pOrderReport->mktId, pOrderReport->ordType, pOrderReport->bsType,
+      pOrderReport->ordStatus, pOrderReport->ordDate, pOrderReport->ordTime,
+      pOrderReport->ordCnfmTime, pOrderReport->ordQty, pOrderReport->ordPrice,
+      pOrderReport->canceledQty, pOrderReport->cumQty, pOrderReport->cumAmt,
+      pOrderReport->cumInterest, pOrderReport->cumFee, pOrderReport->frzAmt,
+      pOrderReport->frzInterest, pOrderReport->frzFee,
+      pOrderReport->origClOrdId, pOrderReport->ordRejReason,
+      pOrderReport->exchErrCode);
+
+  last_order_report = *pOrderReport;
+  sync_.end_transaction();
+}
 /* 成交确认回报 */
 void OptionTestSpi::OnTradeReport(const OesRptMsgHeadT *pRptMsgHead,
                                   const OesTrdCnfmT *pTradeReport) {}
